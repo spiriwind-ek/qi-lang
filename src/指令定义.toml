@@ -1,0 +1,231 @@
+# 字节码指令集定义
+#
+# 每条指令格式:
+# [opcode.指令名]
+# args = ["arg1_type", "arg2_type", ...]
+#  arg_type: byte | short | constant
+# stack_in  = [栈上弹出的值类型...]
+# stack_out = [栈上推入的值类型...]
+# desc = "说明"
+
+[opcode.CONSTANT]
+args = ["constant"]
+stack_in = []
+stack_out = ["值"]
+desc = "推入常量池中的值"
+
+[opcode.NIL]
+args = []
+stack_in = []
+stack_out = ["nil"]
+desc = "推入 nil"
+
+[opcode.TRUE]
+args = []
+stack_in = []
+stack_out = ["bool"]
+desc = "推入 true"
+
+[opcode.FALSE]
+args = []
+stack_in = []
+stack_out = ["bool"]
+desc = "推入 false"
+
+[opcode.POP]
+args = []
+stack_in = ["任意"]
+stack_out = []
+desc = "丢弃栈顶值"
+
+[opcode.DUP]
+args = []
+stack_in = ["值"]
+stack_out = ["值", "值"]
+desc = "复制栈顶值"
+
+[opcode.DEFINE_GLOBAL]
+args = ["constant"]
+stack_in = ["值"]
+stack_out = []
+desc = "定义全局变量（弹出值，存入 globals[name]）"
+
+[opcode.GET_GLOBAL]
+args = ["constant"]
+stack_in = []
+stack_out = ["值"]
+desc = "读取全局变量"
+
+[opcode.SET_GLOBAL]
+args = ["constant"]
+stack_in = ["值"]
+stack_out = ["值"]
+desc = "赋值全局变量（弹出值写入，推回该值）"
+
+[opcode.GET_LOCAL]
+args = ["byte"]
+stack_in = []
+stack_out = ["值"]
+desc = "读取局部变量（通过 slot 索引）"
+
+[opcode.SET_LOCAL]
+args = ["byte"]
+stack_in = ["值"]
+stack_out = ["值"]
+desc = "赋值局部变量"
+
+[opcode.GET_UPVALUE]
+args = ["byte"]
+stack_in = []
+stack_out = ["值"]
+desc = "读取闭包捕获变量"
+
+[opcode.SET_UPVALUE]
+args = ["byte"]
+stack_in = ["值"]
+stack_out = ["值"]
+desc = "赋值闭包捕获变量"
+
+[opcode.ADD]
+args = []
+stack_in = ["值", "值"]
+stack_out = ["值"]
+desc = "弹出 b、a，推入 a+b（数字加法或字符串拼接）"
+
+[opcode.SUBTRACT]
+args = []
+stack_in = ["值", "值"]
+stack_out = ["值"]
+desc = "弹出 b、a，推入 a-b"
+
+[opcode.MULTIPLY]
+args = []
+stack_in = ["值", "值"]
+stack_out = ["值"]
+desc = "弹出 b、a，推入 a*b"
+
+[opcode.DIVIDE]
+args = []
+stack_in = ["值", "值"]
+stack_out = ["值"]
+desc = "弹出 b、a，推入 a/b"
+
+[opcode.NEGATE]
+args = []
+stack_in = ["值"]
+stack_out = ["值"]
+desc = "弹出 a，推入 -a"
+
+[opcode.EQUAL]
+args = []
+stack_in = ["值", "值"]
+stack_out = ["bool"]
+desc = "弹出 b、a，推入 a==b"
+
+[opcode.GREATER]
+args = []
+stack_in = ["值", "值"]
+stack_out = ["bool"]
+desc = "弹出 b、a，推入 a>b"
+
+[opcode.LESS]
+args = []
+stack_in = ["值", "值"]
+stack_out = ["bool"]
+desc = "弹出 b、a，推入 a<b"
+
+[opcode.NOT]
+args = []
+stack_in = ["值"]
+stack_out = ["bool"]
+desc = "弹出 a，推入 not a"
+
+[opcode.JUMP]
+args = ["short"]
+stack_in = []
+stack_out = []
+desc = "无条件跳转（ip += offset）"
+
+[opcode.JUMP_IF_FALSE]
+args = ["short"]
+stack_in = ["值"]
+stack_out = []
+desc = "弹出 a，若假则跳转"
+
+[opcode.LOOP]
+args = ["short"]
+stack_in = []
+stack_out = []
+desc = "向后跳转（ip -= offset，用于循环）"
+
+[opcode.CALL]
+args = ["byte"]
+stack_in = ["函数", "参数..."]
+stack_out = ["返回值"]
+desc = "调用函数（byte = 参数个数）"
+
+[opcode.CLOSURE]
+args = ["constant"]
+stack_in = []
+stack_out = ["闭包"]
+desc = "创建闭包（加载函数 + 捕获 upvalue）"
+
+[opcode.RETURN]
+args = []
+stack_in = ["值"]
+stack_out = []
+desc = "函数返回"
+
+[opcode.BUILD_LIST]
+args = ["byte"]
+stack_in = ["元素..."]
+stack_out = ["列表"]
+desc = "构建列表（byte = 元素个数）"
+
+[opcode.BUILD_STRUCT]
+args = ["byte", "constant"]
+stack_in = ["值..."]
+stack_out = ["结构体"]
+desc = "构建结构体字典（byte = 字段数, constant = 字段名列表）"
+
+[opcode.INDEX_GET]
+args = []
+stack_in = ["列表", "索引"]
+stack_out = ["值"]
+desc = "列表索引读取"
+
+[opcode.INDEX_SET]
+args = []
+stack_in = ["列表", "索引", "值"]
+stack_out = ["值"]
+desc = "列表索引赋值"
+
+[opcode.GET_PROP]
+args = ["constant"]
+stack_in = ["结构体"]
+stack_out = ["值"]
+desc = "读取结构体成员"
+
+[opcode.SET_PROP]
+args = ["constant"]
+stack_in = ["结构体", "值"]
+stack_out = ["值"]
+desc = "赋值结构体成员"
+
+[opcode.INVOKE]
+args = ["constant", "byte"]
+stack_in = ["接收者", "参数..."]
+stack_out = ["返回值"]
+desc = "调用方法（constant=方法名, byte=参数个数）"
+
+[opcode.PRINT]
+args = []
+stack_in = ["值"]
+stack_out = []
+desc = "输出栈顶值"
+
+[opcode.INPUT]
+args = []
+stack_in = ["提示"]
+stack_out = ["文本"]
+desc = "读取用户输入"
