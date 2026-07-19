@@ -1,0 +1,35 @@
+["语句起始"]
+"LET" = true
+"SET" = true
+"OUTPUT" = true
+"IF" = true
+"WHILE" = true
+"REPEAT" = true
+"FOR_EACH" = true
+"RETURN" = true
+"INPUT" = true
+"INCLUDE" = true
+
+["参数类型"]
+"TYPE_INT" = true
+"TYPE_FLOAT" = true
+"TYPE_STR" = true
+"TYPE_BOOL" = true
+"TYPE_NULL" = true
+
+["声明类型"]
+"TYPE_INT" = true
+"TYPE_FLOAT" = true
+"TYPE_STR" = true
+"TYPE_BOOL" = true
+"TYPE_VOID" = true
+"TYPE_NULL" = true
+"TRUE" = true
+"FALSE" = true
+
+["字段类型"]
+"TYPE_INT" = true
+"TYPE_FLOAT" = true
+"TYPE_STR" = true
+"TYPE_BOOL" = true
+
