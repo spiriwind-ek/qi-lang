@@ -1,6 +1,6 @@
 # 奇语言（Qi）
 
-用中文实现程序的编写。
+用中文写代码，像写文章一样自然。
 
 ## 快速开始
 
@@ -12,62 +12,97 @@ python main.py examples/hello.qi
 python qish.py
 
 # 格式化代码
-python src/qifmt.py your_code.qi
+python src/格式化奇.py your_code.qi
 ```
 
-## 目录结构
+## 语法示例
 
 ```
-qi-lang/
-├── src/                # 源代码
-├── tests/              # 测试
-├── examples/           # 示例
-│   ├── hello.qi
-│   ├── math.qi
-│   ├── math_utils.qi
-│   └── test_include.qi
-├── docs/               # 文档
-│   ├── SYNTAX.md       # 语法规范
-│   ├── TUTORIAL.md     # 完整教程
-│   ├── API.md          # API参考
-│   ├── FAQ.md          # 常见问题
-│   ├── ERRORS.md       # 错误信息
-│   └── EXAMPLES.md     # 示例集合
-├── main.py             # 文件执行入口
-├── qish.py             # 交互式Shell
+令 整数 X 为 10。令 文本 名字 为 "奇语言"。
+输出 X 加 5。                    // 15
+
+若 X 大于 0 则：输出 "正"。否则：输出 "负"。    // 条件
+当 X 小于 3 时：设 X 为 X 加 1；输出 X。       // 循环
+
+令 整数 求和 为（整数 甲、整数 乙）：返回 甲 加 乙。  // 函数
+令 整数列 列表 为 [1、2、3]。                      // 列表
+令 结构 学生 含：文本 姓名、整数 年龄。             // 结构体
+设 小明的年龄 为 19。                               // 成员修改
+令 Y 为 若 X 大于 0 则 "正" 否则 "负"。             // 三元表达式
+```
+
+## 项目结构
+
+```
+├── docs
+├── examples
+│   ├── 变量.qi
+│   ├── 测试导入.qi
+│   ├── 二叉树.qi
+│   ├── 斐波那契.qi
+│   ├── 函数二叉树.qi
+│   ├── 函数式.qi
+│   ├── 结构体二叉树.qi
+│   ├── 立方体.qi
+│   ├── 枚举表达式.qi
+│   ├── 你好.qi
+│   ├── 排序.qi
+│   ├── 属性二叉树.qi
+│   ├── 数学工具.qi
+│   ├── 数学.qi
+│   ├── 数组.qi
+│   └── 循环.qi
+├── main.py
+├── qish.py
 ├── README.md
-├── CHANGELOG.md
-└── CONTRIBUTING.md
+├── src
+└── tests
+    ├── 词法分析器测试.py
+    ├── 单元测试.py
+    ├── 格式化奇测试.py
+    ├── 解释器测试.py
+    ├── 图灵完备性测试.py
+    └── 语法分析器测试.py
 ```
 
-## 语法概览
+## 核心特性
 
-```
-令 整数 X 为 10。                          // 变量声明
-设 X 为 20。                               // 变量赋值
-输出 X。                                   // 输出
+| 特性 | 说明 |
+|------|------|
+| 静态类型 | `令 整数 X 为 10` |
+| 中文运算符 | `加`/`+`、`减`/`-`、`乘`/`*`、`除`/`/` |
+| 块结构 | `：` 开始、`。` 结束、`；` 连接多语句 |
+| 类型推导 | `令 X 为 10` 自动推断为整数 |
+| 三元表达式 | `若 条件 则 A 否则 B` |
+| 成员访问 | `小明的姓名` |
+| 结构体 | `令 结构 学生 含：文本 姓名、整数 年龄` |
+| 列表 | `令 整数列 X 为 [1、2、3]` |
+| 函数 | `令 整数 求和 为（整数 甲、整数 乙）：返回 甲 加 乙` |
+| 注释 | `注：全角` 或 `:: 半角` |
+| 文件后缀 | `.qi`/`.奇`（源码）、`.qih`/`.奇头`（头文件） |
 
-若 X 大于 0 则：输出 "正数"。否则：输出 "负数"。 // 条件
-当 X 小于 10 时：设 X 为 X 加 1。          // 循环
+## 工具链
 
-令 整数 求和 为（整数 A、整数 B）：返回 A 加 B。 // 函数
-令 整数列 列表 为 [1、2、3]。               // 列表
-令 结构 学生 含：文本 姓名、整数 年龄。      // 结构体
-```
+- **qifmt** — 格式化工具，将连写代码整理成缩进格式
+- **qish** — 交互式 Shell，支持行编辑和历史命令
+- **管道** — `qifmt code.qi | qish` 直接执行格式化后的代码
 
 ## 文档
 
-- [语法规范](docs/SYNTAX.md)
-- [完整教程](docs/TUTORIAL.md)
-- [API参考](docs/API.md)
-- [常见问题](docs/FAQ.md)
-- [错误信息](docs/ERRORS.md)
-- [示例集合](docs/EXAMPLES.md)
+- [关于语法](docs/关于语法.md)
+- [关于教程](docs/关于教程.md)
+- [关于示例](docs/关于示例.md)
+- [关于常见问题](docs/关于常见问题.md)
+- [关于错误](docs/关于错误.md)
+- [关于接口](docs/关于接口.md)
+- [开发指南](docs/开发指南.md)
+- [版本变更](docs/版本变更.md)
 
 ## 测试
 
 ```bash
-python tests/test_lexer.py
-python tests/test_interpreter.py
-python tests/test_turing.py
+python tests/test_lexer.py        # 词法测试
+python tests/test_interpreter.py  # 解释器测试
+python tests/test_turing.py       # 图灵完备性测试
+python tests/test_unit.py         # 单元测试
 ```

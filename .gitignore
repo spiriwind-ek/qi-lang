@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 *.pyo
 .hermes/
+test*.qi
+debug*.py
+.mimocode/
