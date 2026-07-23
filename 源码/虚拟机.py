@@ -106,7 +106,7 @@ class VM:
                 f"函数 '{func.name}' 期望 {func.arity} 个参数，但收到 {arg_count} 个"
             )
             return False
-        if len(self.frames) >= 64:
+        if len(self.frames) >= 1024:
             self.runtime_error("调用栈溢出")
             return False
         # slots 指向第一个参数，函数在 slots-1
@@ -114,6 +114,10 @@ class VM:
             closure=closure, ip=0,
             slots=len(self.stack) - arg_count
         )
+        # 预分配栈空间给局部变量
+        needed = frame.slots + func.max_slot
+        while len(self.stack) < needed:
+            self.stack.append(None)
         self.frames.append(frame)
         return True
     
@@ -137,9 +141,12 @@ class VM:
     def run(self, chunk: Chunk):
         """执行字节码"""
         # 创建主函数闭包
-        main_func = ObjFunction(name=None, arity=0, chunk=chunk)
+        main_func = ObjFunction(name=None, arity=0, chunk=chunk, max_slot=chunk.max_slot)
         main_closure = ObjClosure(func=main_func)
         self.frames.append(CallFrame(closure=main_closure, ip=0, slots=0))
+        # 预分配主栈空间
+        while len(self.stack) < main_func.max_slot:
+            self.stack.append(None)
         
         frame = self.frames[-1]
         
@@ -192,7 +199,10 @@ class VM:
             
             elif opcode == OpCode.SET_LOCAL:
                 slot = self.read_byte(frame)
-                self.stack[frame.slots + slot] = self.peek(0)
+                idx = frame.slots + slot
+                while len(self.stack) <= idx:
+                    self.stack.append(None)
+                self.stack[idx] = self.peek(0)
             
             elif opcode == OpCode.ADD:
                 b = self.pop()
@@ -428,6 +438,23 @@ class VM:
                             return
                         lst = self.pop()
                         self.push(len(lst))
+                    elif method_name == '插入':
+                        if arg_count != 2:
+                            self.runtime_error(f"'插入' 需要两个参数")
+                            return
+                        value = self.pop()
+                        index = self.pop()
+                        lst = self.pop()
+                        lst.insert(index - 1, value)
+                        self.push(len(lst))
+                    elif method_name == '删除':
+                        if arg_count != 1:
+                            self.runtime_error(f"'删除' 需要一个参数")
+                            return
+                        index = self.pop()
+                        lst = self.pop()
+                        removed = lst.pop(index - 1)
+                        self.push(removed)
                     else:
                         self.runtime_error(f"列表没有方法 '{method_name}'")
                         return
@@ -448,7 +475,11 @@ class VM:
             
             elif opcode == OpCode.PRINT:
                 val = self.pop()
-                self.output.append(str(val))
+                s = str(val)
+                import sys
+                sys.stdout.write(s)
+                sys.stdout.flush()
+                self.output.append(s)
             
             elif opcode == OpCode.INPUT:
                 prompt = self.pop() if self.stack else ""

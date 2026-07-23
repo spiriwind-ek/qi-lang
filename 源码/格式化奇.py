@@ -20,25 +20,21 @@ class FormatError(Exception):
 # 用于预处理的关键字集合（确保词法分析器能正确分词）
 _KEYWORDS = {
     # 语句起始
-    '令', '设', '若', '再若', '当', '重复', '返回', '输出', '读取',
-    '结构', '包括', '于',
+    '令', '设', '若', '再若', '否则', '当', '重复', '返回', '输出',
+    '结构', '包括', '对', '调',
     # 类型
     '整数', '小数', '文本', '布尔', '空', '无', '列',
     '整数列', '小数列', '文本列',
-    # 运算符
-    '加', '减', '乘', '除',
+    # 运算符（除、乘 不在列表中——避免拆分"删除""阶乘"）
+    '加', '减', '除',
     '等于', '不等于', '大于', '小于', '大于等于', '小于等于',
     '且', '或', '抑或', '非',
     # 布尔
     '真', '假',
     # 控制流
-    '则', '时', '次', '否则', '再若', '每项', '取',
-    # 其他关键字
-    '含', '的', '为', '长度', '结构',
-    # 函数
-    '返回',
-    # 遍历
-    '每项', '取', '于',
+    '则', '时', '次',
+    # 结构关键字
+    '含', '的', '为', '长度', '每个', '每项',
 }
 
 
@@ -55,9 +51,9 @@ def normalize_punct(raw: str) -> str:
 
 def _space_tokens(text: str) -> str:
     """在关键字之间添加空格，确保词法分析器能正确分词。
-    
+
     用正则一次性匹配所有关键字（最长匹配优先），避免单字符
-    关键字错误地拆分多字符关键字（如 于 不应拆分 大于）。
+    关键字拆分多字符关键字。使用负向后顾+前瞻防止拆分中文词。
     """
     # 保护字符串字面量
     strings = []
@@ -68,8 +64,11 @@ def _space_tokens(text: str) -> str:
     
     # 按长度降序排列，构建正则（最长匹配优先）
     kws = sorted(_KEYWORDS, key=lambda k: (-len(k), k))
+    # 中文字符集
+    _CN = r'[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]'
     pattern = '|'.join(re.escape(kw) for kw in kws)
-    text = re.sub(f'({pattern})', r' \1 ', text)
+    # 用负向后顾+前瞻确保不拆分中文复合词
+    text = re.sub(f'(?<!{_CN})({pattern})(?!{_CN})', r' \1 ', text)
     
     # 清理多余空格
     text = re.sub(r' +', ' ', text)
@@ -456,7 +455,11 @@ def _fallback_format(raw: str, comments: list) -> str:
                 lines.append(' ' * (indent * INDENT) + ''.join(pending) + '；')
                 pending = []
         else:
-            pending.append(val)
+            # 在 token 之间加空格，防止标识符粘连
+            if pending and pending[-1] not in ('（', '【'):
+                pending.append(' ' + val)
+            else:
+                pending.append(val)
     
     if pending:
         lines.append(' ' * (indent * INDENT) + ''.join(pending))

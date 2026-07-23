@@ -42,7 +42,7 @@ def test_turing_completeness():
     print("  ✓ 函数定义和调用")
 
     # 测试6：递归
-    result = run_code('令 整数 阶 为（整数 n）：若 n 等于 1 则：返回 1。返回 n 乘 阶（n 减 1）。令 整数 结果 为 阶（5）。输出 结果。')
+    result = run_code('令 整数 阶乘 为（整数 n）：若 n 等于 1 则：返回 1。返回 n 乘 阶乘（n 减 1）。令 整数 结果 为 阶乘（5）。输出 结果。')
     assert result == ['120'], f"递归测试失败: {result}"
     print("  ✓ 递归")
 
@@ -101,7 +101,7 @@ def test_code_logic():
     print("  ✓ 斐波那契数列")
 
     # 测试2：阶乘
-    result = run_code('令 整数 阶 为（整数 n）：若 n 等于 0 则：返回 1。返回 n 乘 阶（n 减 1）。令 整数 结果 为 阶（6）。输出 结果。')
+    result = run_code('令 整数 阶乘 为（整数 n）：若 n 等于 0 则：返回 1。返回 n 乘 阶乘（n 减 1）。令 整数 结果 为 阶乘（6）。输出 结果。')
     assert result == ['720'], f"阶乘测试失败: {result}"
     print("  ✓ 阶乘")
 

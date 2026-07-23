@@ -1,4 +1,8 @@
-"""奇语言 解释器（AST 树遍历）"""
+"""奇语言 解释器（AST 树遍历 + VM 包装）
+
+默认走字节码 VM（_run_vm），留树遍历解释器（execute）仅用于对照验证。
+qi run CLI 走直接 Compiler→VM 路径，不经此类。
+"""
 from 语法树 import *
 from 环境 import Environment, NativeFunction, RUNTIME_ERROR_MESSAGES
 from 记号 import TokenType
@@ -72,7 +76,8 @@ class Interpreter:
             value = self.evaluate(node.value)
             type_name = node.type_name
             if type_name is None:
-                type_name = self._infer_type(value)
+                from 环境 import Environment
+                type_name = Environment._infer_type(value)
             self.env.declare_var(node.name, value, type_name)
 
         elif isinstance(node, VarAssign):
@@ -88,7 +93,11 @@ class Interpreter:
 
         elif isinstance(node, PrintStatement):
             value = self.evaluate(node.value)
-            self.output.append(str(value))
+            s = str(value)
+            import sys
+            sys.stdout.write(s)
+            sys.stdout.flush()
+            self.output.append(s)
 
         elif isinstance(node, InputStatement):
             prompt = self.evaluate(node.prompt) if node.prompt else ""
@@ -187,6 +196,11 @@ class Interpreter:
         elif isinstance(node, StructInstantiate):
             struct_fields = self.env.get_struct(node.struct_type)
             values = [self.evaluate(arg) for arg in node.args]
+            if len(values) != len(struct_fields):
+                raise RuntimeError(
+                    f"结构体 '{node.struct_type}' 需要 {len(struct_fields)} 个参数"
+                    f"，提供了 {len(values)} 个"
+                )
             obj = dict(zip([f[1] for f in struct_fields], values))
             self.env.declare_var(node.name, obj, node.struct_type)
 
@@ -308,8 +322,7 @@ class Interpreter:
 
         raise RuntimeError(f"不支持的表达式: {type(node).__name__}")
 
-    def _infer_type(self, value):
-        return Environment._infer_type(value)
+    # _infer_type 继承自 Environment._infer_type（静态方法）
 
     def call_func(self, node):
         func = self.env.get_func(node.name)

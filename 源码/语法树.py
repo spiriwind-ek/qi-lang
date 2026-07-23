@@ -1,14 +1,11 @@
-"""奇语言 AST 节点定义
-
-铁律6: 先只实现变量声明、赋值、整数/文本字面量、输出、简单算术，其余留桩。
-"""
+"""奇语言 AST 节点定义"""
 from dataclasses import dataclass, field
 from typing import Any
 
 
 class Node:
     """AST 节点基类"""
-    pass
+    line: int = 0
 
 
 # ─── 字面量 ───

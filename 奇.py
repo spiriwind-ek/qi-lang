@@ -7,11 +7,16 @@ import os
 #   python3 奇.py        → __file__ = 奇.py        → 源码/ 在旁边的 源码/
 #   python3 -m qi        → __file__ = qi/__main__.py → 源码/ 在 ../源码/
 _this_dir = os.path.dirname(os.path.abspath(__file__))
+_root = None
 for _p in (_this_dir, os.path.join(_this_dir, '..')):
     _cand = os.path.join(_p, '源码')
     if os.path.isdir(_cand):
         sys.path.insert(0, _cand)
+        _root = _p
         break
+# 加入项目根目录，以便 import qish
+if _root and _root not in sys.path:
+    sys.path.insert(0, _root)
 
 from 定义加载器 import 源码后缀, 编译后缀, 缓存目录候选
 
@@ -74,36 +79,64 @@ def _cmd_run(args: list[str]):
         sys.exit(1)
     filename = args[0]
 
-    cache_path = _缓存路径(filename)
-    if cache_path and _缓存有效(filename, cache_path):
-        from 字节码 import Chunk
-        from 虚拟机 import VM
-        with open(cache_path, 'rb') as f:
-            chunk = Chunk.deserialize(f.read())
-        vm = VM()
-        vm.run(chunk)
-        for line in vm.get_output():
-            print(line)
-        return
+    # 检查后缀
+    _, ext = os.path.splitext(filename)
+    if ext not in 源码后缀:
+        print(f"错误: 不支持的文件后缀 '{ext}'，仅支持: {'、'.join(源码后缀)}")
+        sys.exit(1)
 
-    # 先格式化，再编译，再执行
+    cache_path = _缓存路径(filename)
+
+    # 1. 尝试从缓存加载并执行
+    if cache_path and _缓存有效(filename, cache_path):
+        try:
+            from 字节码 import Chunk
+            from 虚拟机 import VM
+            with open(cache_path, 'rb') as f:
+                chunk = Chunk.deserialize(f.read())
+            vm = VM()
+            vm.run(chunk)
+            return
+        except Exception as e:
+            print(f"缓存失效，重新编译: {e}")
+
+    # 2. 读取源码
     with open(filename, 'r', encoding='utf-8') as f:
         source = f.read()
-    from 格式化奇 import format_qi
-    source = format_qi(source)
 
     try:
-        from 解释器 import Interpreter
-        interp = Interpreter(use_vm=True)
-        result = interp.run(source)
-        for line in result:
-            print(line)
-        if cache_path and hasattr(interp, '_last_chunk'):
-            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
-            with open(cache_path, 'wb') as f:
-                f.write(interp._last_chunk.serialize())
+        # 3. 编译：Lexer → Parser → Compiler
+        from 词法分析器 import Lexer
+        from 语法分析器 import Parser
+        from 编译器 import Compiler, CompileError
+        from 表达式解析器 import ParseError
+
+        tokens = Lexer(source).tokenize()
+        ast = Parser(tokens).parse()
+        compiler = Compiler()
+        chunk = compiler.compile(ast)
+
+        # 4. 编译成功后写缓存（即使运行时失败，编译缓存也有效）
+        if cache_path:
+            try:
+                os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+                with open(cache_path, 'wb') as f:
+                    f.write(chunk.serialize())
+            except Exception as e:
+                print(f"缓存写入失败: {e}", file=sys.stderr)
+
+        # 5. 执行字节码
+        from 虚拟机 import VM
+        vm = VM()
+        vm.run(chunk)
+
+    except (ParseError, CompileError) as e:
+        from 错误报告 import format_error_safe
+        print(format_error_safe(e, source), file=sys.stderr)
+        sys.exit(1)
     except Exception as e:
-        print(f"错误: {e}")
+        from 错误报告 import format_error_safe
+        print(format_error_safe(e, source), file=sys.stderr)
         sys.exit(1)
 
 
@@ -130,12 +163,12 @@ def _cmd_fmt(args: list[str]):
 
 
 def _cmd_shell(args: list[str]):
-    from qish import main as shell_main
+    from qi.qish import main as shell_main
     shell_main()
 
 
 def _cmd_help():
-    print("奇语言 v0.1.3-beta")
+    print("奇语言 v0.2.1-beta")
     print()
     print("用法: qi <子命令> [参数]")
     print()

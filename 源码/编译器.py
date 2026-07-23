@@ -13,21 +13,23 @@ class CompileError(Exception):
 class Compiler:
     """AST → 字节码 编译器"""
     
-    def __init__(self, structs=None, enclosing=None):
-        self.chunk = Chunk()        # 当前编译的 Chunk
-        self.func = ObjFunction()   # 当前编译的函数
-        self.scope_depth = 0        # 作用域深度（0=全局）
-        self.locals = []            # 局部变量表 [(name, depth, is_captured), ...]
-        self._structs = structs or {}  # struct 定义 {name: fields}
-        self._last_line = 0         # 最后一个已知行号
-        self._enclosing = enclosing  # 外层编译器（用于闭包 upvalue）
-        self._upvalues = []         # [{'is_local': bool, 'index': int}, ...]
+    def __init__(self, structs=None, enclosing=None, globals_set=None):
+        self.chunk = Chunk()
+        self.func = ObjFunction()
+        self.scope_depth = 0
+        self.locals = []
+        self._structs = structs or {}
+        self._last_line = 0
+        self._enclosing = enclosing
+        self._upvalues = []
+        self._globals = globals_set or set()  # 已声明的全局变量名集合
     
     def compile(self, node) -> Chunk:
         """编译 AST 根节点，返回 Chunk"""
         self._compile_node(node)
         self._emit_op(OpCode.NIL, 0)     # 默认返回值
         self._emit_op(OpCode.RETURN, 0)
+        self.chunk.max_slot = self.func.max_slot
         return self.chunk
     
     # ─── 工具方法 ───
@@ -184,6 +186,9 @@ class Compiler:
     
     def _add_local(self, name: str):
         self.locals.append([name, self.scope_depth, False])  # [name, depth, is_captured]
+        # 追踪峰值局部变量槽数，用于 VM 栈预分配
+        if len(self.locals) > self.func.max_slot:
+            self.func.max_slot = len(self.locals)
     
     def _compile_var_decl(self, node: VarDecl):
         line = self._get_line(node)
@@ -197,6 +202,9 @@ class Compiler:
             self._emit_byte(slot, line)
         else:
             # 全局变量
+            if node.name in self._globals:
+                raise CompileError(f"变量 '{node.name}' 已声明", line)
+            self._globals.add(node.name)
             name_idx = self._make_constant(node.name)
             self._emit_op(OpCode.DEFINE_GLOBAL, line)
             self._emit_byte(name_idx, line)
@@ -395,8 +403,8 @@ class Compiler:
         """编译函数定义：创建独立 ObjFunction，用 CLOSURE 包装"""
         line = self._get_line(node)
         
-        # 创建嵌套编译器编译函数体
-        child = Compiler(structs=self._structs, enclosing=self)
+        # 创建嵌套编译器编译函数体，传递已声明的全局变量集合
+        child = Compiler(structs=self._structs, enclosing=self, globals_set=self._globals)
         child._last_line = self._last_line
         child.func.name = node.name
         child.func.arity = len(node.params)
@@ -426,6 +434,9 @@ class Compiler:
             self._emit_byte(1 if up['is_local'] else 0, line)
             self._emit_byte(up['index'], line)
         
+        if node.name in self._globals:
+            raise CompileError(f"变量 '{node.name}' 已声明", line)
+        self._globals.add(node.name)
         name_idx = self._make_constant(node.name)
         self._emit_op(OpCode.DEFINE_GLOBAL, line)
         self._emit_byte(name_idx, line)
@@ -487,6 +498,9 @@ class Compiler:
         self._emit_op(OpCode.BUILD_LIST, line)
         self._emit_byte(len(node.elements), line)
         # 定义变量
+        if node.name in self._globals:
+            raise CompileError(f"变量 '{node.name}' 已声明", line)
+        self._globals.add(node.name)
         name_idx = self._make_constant(node.name)
         self._emit_op(OpCode.DEFINE_GLOBAL, line)
         self._emit_byte(name_idx, line)
@@ -607,14 +621,22 @@ class Compiler:
     # ─── Include ───
     
     def _compile_include(self, node: IncludeStatement):
+        """包括：独立编译被包含文件为独立模块（方案A）
+        
+        生成 CLOSURE + CALL 指令，使被包含文件在独立帧栈中运行，
+        避免栈污染。
+        """
         line = self._get_line(node)
-        # 编译 include 路径表达式（往栈上推路径字符串）
-        self._compile_node(node.path)
-        # include 的效果是在编译时加载文件并编译其内容
         path = getattr(node.path, 'value', None)
         if path and isinstance(path, str):
             import os
+            # 安全检查
+            if os.path.isabs(path):
+                raise CompileError(f"不允许使用绝对路径: {path}")
             real_path = os.path.realpath(os.path.join(os.getcwd(), path))
+            work_dir = os.path.realpath(os.getcwd())
+            if not real_path.startswith(work_dir + os.sep) and real_path != work_dir:
+                raise CompileError(f"不允许访问工作目录外的文件: {path}")
             if os.path.exists(real_path):
                 with open(real_path, 'r', encoding='utf-8') as f:
                     source = f.read()
@@ -622,8 +644,36 @@ class Compiler:
                 from 语法分析器 import Parser
                 tokens = Lexer(source).tokenize()
                 ast = Parser(tokens).parse()
-                self._compile_node(ast)
-        # 弹出路径值，清理栈
+                
+                # 独立编译：子编译器生成独立 ObjFunction（方案A）
+                child = Compiler(
+                    structs=self._structs, enclosing=self,
+                    globals_set=self._globals
+                )
+                child._last_line = self._last_line
+                child.func.name = path
+                child.scope_depth = 0
+                child_chunk = child.compile(ast)
+                child.func.chunk = child_chunk
+                child.func.upvalue_count = len(child._upvalues)
+                
+                # CLOSURE: 包装为可调用闭包
+                func_idx = self._make_constant(child.func)
+                self._emit_op(OpCode.CLOSURE, line)
+                self._emit_byte(func_idx, line)
+                for upvalue in child._upvalues:
+                    self._emit_byte(1 if upvalue.is_local else 0, line)
+                    self._emit_byte(upvalue.index, line)
+                
+                # CALL: 执行模块（0 参数）
+                self._emit_op(OpCode.CALL, line)
+                self._emit_byte(0, line)
+                # POP: 丢弃模块返回值
+                self._emit_op(OpCode.POP, line)
+                return
+        
+        # 动态路径（无法在编译时解析）：保留旧行为
+        self._compile_node(node.path)
         self._emit_op(OpCode.POP, line)
     
     # ─── 运算 ───

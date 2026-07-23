@@ -93,6 +93,8 @@ class TokenType(Enum):
     # 特殊
     EOF = auto()         # 文件结束
     NEWLINE = auto()     # 换行
+    INDENT = auto()      # 缩进增加
+    DEDENT = auto()      # 缩进减少
 
 
 @dataclass

@@ -1,5 +1,5 @@
 gitt/cangjntib/linux_x86_64_cjnatibpcre2-8.so.0: no version information available (required by git)
-# Qi Language v0.1.2-alpha
+# Qi Language v0.2.1-beta
 
 Write code in Chinese, as natural as writing an article.
 
@@ -155,3 +155,7 @@ Qi uses Chinese keywords. Here's a quick reference:
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+This project is licensed under the [Apache License 2.0](../LICENSE).

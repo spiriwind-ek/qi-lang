@@ -68,6 +68,7 @@ AFTER_LET = {
 EXPR_KEYWORDS = {
     '真': TokenType.TRUE,
     '假': TokenType.FALSE,
+    '无': TokenType.TYPE_NULL,
     '则': TokenType.THEN,
     '时': TokenType.THEN,
     '次': TokenType.TIMES,

@@ -5,3 +5,6 @@ __pycache__/
 test*.qi
 debug*.py
 .mimocode/
+_qicache_/
+plans/
+lua-5.5.0/

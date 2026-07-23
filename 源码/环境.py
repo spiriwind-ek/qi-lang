@@ -27,7 +27,7 @@ class NativeFunction:
     """原生函数包装器，用于标准库"""
     def __init__(self, name, arity, impl):
         self.name = name
-        self.arity = arity  # 最少参数数量
+        self.arity = arity  # 固定参数数量
         self.impl = impl    # Python callable
 
 

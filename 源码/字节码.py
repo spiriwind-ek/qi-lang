@@ -13,6 +13,7 @@ class Chunk:
     code: list[int] = field(default_factory=list)     # 指令 + 参数
     constants: list[Any] = field(default_factory=list) # 常量池
     lines: list[int] = field(default_factory=list)     # 行号表（与 code 一一对应）
+    max_slot: int = 0                                   # 最大局部变量槽数
     
     def emit_byte(self, byte: int, line: int):
         """发射一个字节（指令或参数）"""
@@ -60,7 +61,12 @@ class Chunk:
 
     def serialize(self) -> bytes:
         """将 Chunk 序列化为字节流（.简令 格式）"""
-        data = {'code': self.code, 'constants': self.constants, 'lines': self.lines}
+        data = {
+            'code': self.code,
+            'constants': self.constants,
+            'lines': self.lines,
+            'max_slot': self.max_slot,
+        }
         body = pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL)
         return 编译签名 + struct.pack('<I', len(body)) + body
 
@@ -77,6 +83,7 @@ class Chunk:
         chunk.code = obj['code']
         chunk.constants = obj['constants']
         chunk.lines = obj['lines']
+        chunk.max_slot = obj.get('max_slot', 0)  # 旧格式不含 max_slot
         return chunk
 
 @dataclass
@@ -86,6 +93,7 @@ class ObjFunction:
     arity: int = 0
     chunk: Chunk = field(default_factory=Chunk)
     upvalue_count: int = 0
+    max_slot: int = 0  # 最大局部变量槽数，用于栈预分配
 
 
 @dataclass

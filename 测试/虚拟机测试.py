@@ -119,10 +119,10 @@ def test_func_fibonacci():
     print("  ✓ test_func_fibonacci")
 
 def test_func_factorial():
-    code = '''令 整数 阶 为（整数 n）：
+    code = '''令 整数 阶乘 为（整数 n）：
     若 n 等于 0 则：返回 1。
-    返回 n 乘 阶（n 减 1）。
-令 整数 结果 为 阶（6）。输出 结果。'''
+    返回 n 乘 阶乘（n 减 1）。
+令 整数 结果 为 阶乘（6）。输出 结果。'''
     assert run_vm(code) == ['720']
     print("  ✓ test_func_factorial")
 
