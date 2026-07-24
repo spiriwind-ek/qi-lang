@@ -29,10 +29,15 @@ class StmtParser(ExprParser):
 
     # ─── 块 ───
 
-    def _parse_block_body(self):
+    def _parse_block_body(self, break_on_else=True):
         """解析块：支持两种模式
         - 缩进：：后换行 + INDENT，DEDENT 结束
         - 行内：：后跟单语句，。结束（兼容）
+        
+        参数 break_on_else：
+            True（默认）：遇到 否则/再若 时提前结束块解析，由外层 parse_if 消费。
+            False：仅在 DEDENT/EOF 处结束，用于循环体（当/重复/对），
+                   使内部的 若...否则... 不被截断。
         """
         self.expect(TokenType.COLON)
         
@@ -45,7 +50,10 @@ class StmtParser(ExprParser):
             while not self.at(TokenType.DEDENT) and not self.at(TokenType.EOF):
                 while self.at(TokenType.NEWLINE):
                     self.advance()
-                if self.at(TokenType.DEDENT, TokenType.EOF, TokenType.ELSE, TokenType.ELIF):
+                _break_tokens = [TokenType.DEDENT, TokenType.EOF]
+                if break_on_else:
+                    _break_tokens += [TokenType.ELSE, TokenType.ELIF]
+                if self.at(*_break_tokens):
                     break
                 stmts.append(self.parse_statement())
                 if self.at(TokenType.SEMI):
@@ -65,7 +73,7 @@ class StmtParser(ExprParser):
                 self.advance()
                 continue
             # 否则/再若 属于上层解析器，不由本块消费
-            if self.at(TokenType.ELSE, TokenType.ELIF):
+            if break_on_else and self.at(TokenType.ELSE, TokenType.ELIF):
                 break
             stmts.append(self.parse_statement())
             if self.at(TokenType.DOT):
@@ -306,6 +314,9 @@ class StmtParser(ExprParser):
         self.expect(TokenType.THEN)
         then_block = self._parse_block_body()
         else_block = None
+        # 跳过换行，支持跨行 否则/否则若（例如在循环体内）
+        while self.at(TokenType.NEWLINE):
+            self.advance()
         if self.at(TokenType.ELSE):
             self.advance()
             else_block = self._parse_block_body()
@@ -320,7 +331,7 @@ class StmtParser(ExprParser):
         self.expect(TokenType.WHILE)
         condition = self.parse_expression()
         self.expect(TokenType.THEN)
-        body = self._parse_block_body()
+        body = self._parse_block_body(break_on_else=False)
         return WhileLoop(condition, body)
 
     # ─── 计数循环 ───
@@ -330,7 +341,7 @@ class StmtParser(ExprParser):
         self.expect(TokenType.REPEAT)
         count = self.parse_expression()
         self.expect(TokenType.TIMES)
-        body = self._parse_block_body()
+        body = self._parse_block_body(break_on_else=False)
         return RepeatLoop(count, body)
 
     def parse_for_each(self):
@@ -341,7 +352,7 @@ class StmtParser(ExprParser):
             self.advance()
         self.expect(TokenType.EACH)              # 每个
         item_tok = self.expect(TokenType.IDENT)  # X
-        body = self._parse_block_body()          # ：
+        body = self._parse_block_body(break_on_else=False)  # ：
         return ForEachLoop(item_tok.value, list_tok.value, body)
 
     # ─── 返回 ───

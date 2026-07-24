@@ -85,7 +85,7 @@ def main():
         return
 
     setup_readline()
-    print("奇语言 Shell v0.2.0-beta")
+    print("奇语言 Shell v0.2.1-beta")
     print("输入代码执行，输入 退出 结束")
     print()
 

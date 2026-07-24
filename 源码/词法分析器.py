@@ -41,7 +41,7 @@ _ALWAYS_CN_TOKENS = sorted({
 # 语句起始关键字——仅在序列开头或标点后切分
 # 包含控制流、声明、I/O 等关键字
 _STMT_START_TOKENS = sorted({
-    '令', '设', '若', '再若', '否则', '当', '重复', '返回', '输出',
+    '令', '设', '若', '再若', '否则若', '否则', '当', '重复', '返回', '输出',
     '结构', '包括', '对', '调',
 }, key=lambda k: (-len(k), k))
 
@@ -117,6 +117,17 @@ class Lexer:
                 return ''.join(result)
             if ch == '\\':
                 self.advance()
+                # 尝试中文转义名（多字符）：\换行、\制表 等
+                start = self.pos
+                while self.pos < len(self.source) and ord(self.peek()) > 127:
+                    self.advance()
+                cn_word = self.source[start:self.pos]
+                CN_ESCAPES = {'换行': '\n', '回车': '\r', '制表': '\t', '反斜': '\\', '空': '\0'}
+                if cn_word and cn_word in CN_ESCAPES:
+                    result.append(CN_ESCAPES[cn_word])
+                    continue
+                # 不是中文转义名，回退到单字符转义
+                self.pos = start
                 esc = self.advance() if self.pos < len(self.source) else None
                 if esc is None:
                     raise LexerError("转义字符不完整", self.line, self.col)

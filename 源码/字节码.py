@@ -1,10 +1,93 @@
 """字节码数据结构：Chunk、ObjFunction"""
-import pickle
 import struct
 from dataclasses import dataclass, field
 from typing import Any
 from 指令加载器 import OpCode
 from 定义加载器 import 编译签名
+
+
+# ── 安全序列化：类型标签 ──────────────────────────
+# 用结构化的二进制格式替代 pickle，不执行任意代码
+_TAG_INT = 0
+_TAG_FLOAT = 1
+_TAG_STR = 2
+_TAG_BOOL = 3
+_TAG_NONE = 4
+_TAG_LIST = 5
+_TAG_OBJFUNC = 6
+
+
+def _pack_value(val: Any) -> bytes:
+    """将常量值编码为带类型标签的字节序列"""
+    if val is None:
+        return struct.pack('<B', _TAG_NONE)
+    if isinstance(val, bool):
+        return struct.pack('<BB', _TAG_BOOL, 1 if val else 0)
+    if isinstance(val, int):
+        return struct.pack('<Bq', _TAG_INT, val)
+    if isinstance(val, float):
+        return struct.pack('<Bd', _TAG_FLOAT, val)
+    if isinstance(val, str):
+        b = val.encode('utf-8')
+        return struct.pack('<BI', _TAG_STR, len(b)) + b
+    if isinstance(val, list):
+        items = b''.join(_pack_value(item) for item in val)
+        return struct.pack('<BI', _TAG_LIST, len(val)) + items
+    if hasattr(val, '_serialize_func'):  # ObjFunction
+        fb = val._serialize_func()
+        return struct.pack('<BI', _TAG_OBJFUNC, len(fb)) + fb
+    raise TypeError(f"不支持序列化的类型: {type(val).__name__}")
+
+
+def _unpack_value(data: bytes, offset: int) -> tuple[Any, int]:
+    """从字节序列解码常量值，返回 (值, 新偏移)"""
+    tag = data[offset]
+    offset += 1
+    if tag == _TAG_NONE:
+        return None, offset
+    if tag == _TAG_BOOL:
+        return bool(data[offset]), offset + 1
+    if tag == _TAG_INT:
+        val = struct.unpack_from('<q', data, offset)[0]
+        return val, offset + 8
+    if tag == _TAG_FLOAT:
+        val = struct.unpack_from('<d', data, offset)[0]
+        return val, offset + 8
+    if tag == _TAG_STR:
+        length = struct.unpack_from('<I', data, offset)[0]
+        offset += 4
+        val = data[offset:offset + length].decode('utf-8')
+        return val, offset + length
+    if tag == _TAG_LIST:
+        count = struct.unpack_from('<I', data, offset)[0]
+        offset += 4
+        items = []
+        for _ in range(count):
+            item, offset = _unpack_value(data, offset)
+            items.append(item)
+        return items, offset
+    if tag == _TAG_OBJFUNC:
+        length = struct.unpack_from('<I', data, offset)[0]
+        offset += 4
+        func = ObjFunction._deserialize_func(data[offset:offset + length])
+        return func, offset + length
+    raise ValueError(f"未知的类型标签: {tag}")
+
+
+def _pack_bytes_list(arr: list[int]) -> bytes:
+    """将整数列表（值范围 0-255）打包为字节序列"""
+    return struct.pack('<I', len(arr)) + bytes(arr)
+
+
+def _unpack_bytes_list(data: bytes, offset: int) -> tuple[list[int], int]:
+    """从字节序列解包整数列表"""
+    length = struct.unpack_from('<I', data, offset)[0]
+    offset += 4
+    vals = list(data[offset:offset + length])
+    return vals, offset + length
+
+
+# ── 数据结构 ──────────────────────────────────────
 
 
 @dataclass
@@ -51,7 +134,6 @@ class Chunk:
     
     def emit_loop(self, loop_start: int, line: int):
         """发射循环回跳指令"""
-        # offset = 当前指令位置 + 3(LOOP指令长度) - 循环开始位置
         offset = len(self.code) + 3 - loop_start
         self.emit_op(OpCode.LOOP, line)
         self.emit_byte((offset >> 8) & 0xff, line)
@@ -60,31 +142,51 @@ class Chunk:
     # ── 序列化 ──────────────────────────────────────
 
     def serialize(self) -> bytes:
-        """将 Chunk 序列化为字节流（.简令 格式）"""
-        data = {
-            'code': self.code,
-            'constants': self.constants,
-            'lines': self.lines,
-            'max_slot': self.max_slot,
-        }
-        body = pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL)
-        return 编译签名 + struct.pack('<I', len(body)) + body
+        """将 Chunk 序列化为字节流（.简令 格式）。
+        
+        使用自定义二进制格式（非 pickle），不执行任意代码。
+        格式：[签名][max_slot][code_len][code...][lines_len][lines...]
+              [常量数量][常量1][常量2]...
+        """
+        parts = [
+            编译签名,
+            struct.pack('<I', self.max_slot),
+            _pack_bytes_list(self.code),
+            _pack_bytes_list(self.lines),
+            struct.pack('<I', len(self.constants)),
+        ]
+        for c in self.constants:
+            parts.append(_pack_value(c))
+        return b''.join(parts)
 
     @staticmethod
     def deserialize(data: bytes) -> 'Chunk':
-        """从字节流反序列化 Chunk"""
+        """从字节流反序列化 Chunk（安全，不执行代码）"""
         sig = 编译签名
         if data[:len(sig)] != sig:
             raise ValueError("不是有效的 .简令 文件")
-        body_len = struct.unpack('<I', data[len(sig):len(sig)+4])[0]
-        body = data[len(sig)+4:len(sig)+4+body_len]
-        obj = pickle.loads(body)
+        offset = len(sig)
+
+        max_slot = struct.unpack_from('<I', data, offset)[0]
+        offset += 4
+
+        code, offset = _unpack_bytes_list(data, offset)
+        lines, offset = _unpack_bytes_list(data, offset)
+
+        const_count = struct.unpack_from('<I', data, offset)[0]
+        offset += 4
+        constants = []
+        for _ in range(const_count):
+            val, offset = _unpack_value(data, offset)
+            constants.append(val)
+
         chunk = Chunk()
-        chunk.code = obj['code']
-        chunk.constants = obj['constants']
-        chunk.lines = obj['lines']
-        chunk.max_slot = obj.get('max_slot', 0)  # 旧格式不含 max_slot
+        chunk.code = code
+        chunk.constants = constants
+        chunk.lines = lines
+        chunk.max_slot = max_slot
         return chunk
+
 
 @dataclass
 class ObjFunction:
@@ -94,6 +196,40 @@ class ObjFunction:
     chunk: Chunk = field(default_factory=Chunk)
     upvalue_count: int = 0
     max_slot: int = 0  # 最大局部变量槽数，用于栈预分配
+
+    def _serialize_func(self) -> bytes:
+        """序列化 ObjFunction（递归序列化内部 Chunk）"""
+        if self.name is None:
+            header = b'\x00'
+        else:
+            encoded = self.name.encode('utf-8')
+            header = b'\x01' + struct.pack('<I', len(encoded)) + encoded
+        chunk_bytes = self.chunk.serialize() if self.chunk else b''
+        return (
+            header +
+            struct.pack('<III', self.arity, self.upvalue_count, self.max_slot) +
+            struct.pack('<I', len(chunk_bytes)) + chunk_bytes
+        )
+
+    @staticmethod
+    def _deserialize_func(data: bytes) -> 'ObjFunction':
+        """反序列化 ObjFunction"""
+        offset = 0
+        has_name = data[offset]
+        offset += 1
+        name = None
+        if has_name:
+            name_len = struct.unpack_from('<I', data, offset)[0]
+            offset += 4
+            name = data[offset:offset + name_len].decode('utf-8')
+            offset += name_len
+        arity, upvalue_count, max_slot = struct.unpack_from('<III', data, offset)
+        offset += 12
+        chunk_len = struct.unpack_from('<I', data, offset)[0]
+        offset += 4
+        chunk = Chunk.deserialize(data[offset:offset + chunk_len]) if chunk_len > 0 else Chunk()
+        return ObjFunction(name=name, arity=arity, chunk=chunk,
+                          upvalue_count=upvalue_count, max_slot=max_slot)
 
 
 @dataclass

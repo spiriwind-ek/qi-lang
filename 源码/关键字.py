@@ -22,6 +22,7 @@ STMT_START = {
     '设': TokenType.SET,
     '若': TokenType.IF,
     '再若': TokenType.ELIF,
+    '否则若': TokenType.ELIF,
     '否则': TokenType.ELSE,
     '当': TokenType.WHILE,
     '重复': TokenType.REPEAT,
@@ -74,7 +75,9 @@ EXPR_KEYWORDS = {
     '次': TokenType.TIMES,
     '若': TokenType.IF,       # 三元表达式
     '再若': TokenType.ELIF,   # 三元表达式
+    '否则若': TokenType.ELIF, # 三元表达式 / 否则若
     '否则': TokenType.ELSE,   # 三元表达式
+    '读': TokenType.INPUT,    # 可在表达式内使用：数值化(读())
 }
 
 # 二元运算符（在两个表达式之间）

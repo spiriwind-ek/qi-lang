@@ -615,8 +615,9 @@ class Compiler:
         self._emit_op(OpCode.INPUT, line)
         # 把输入值存入 _input 全局变量（与 AST 解释器行为一致）
         self._emit_op(OpCode.DUP, line)
-        self._emit_constant("_input", line)
+        input_idx = self._make_constant("_input")
         self._emit_op(OpCode.DEFINE_GLOBAL, line)
+        self._emit_byte(input_idx, line)
     
     # ─── Include ───
     

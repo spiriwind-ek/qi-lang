@@ -14,6 +14,7 @@ from 语法树 import (
     BinaryOp, TernaryOp, UnaryOp, FuncCall, MethodCall, MemberAccess,
     ListAccess, ListLength, StructInstantiate,
     NumberLiteral, StringLiteral, BoolLiteral, NullLiteral, Identifier,
+    InputStatement,
 )
 
 
@@ -304,6 +305,14 @@ class ExprParser:
                 return StructInstantiate(struct_type=name, name="", args=self._parse_args())
 
             return Identifier(name)
+
+        # ── 读表达式：可在函数参数等表达式位置使用 ──
+        if pt == TokenType.INPUT:
+            self.advance()
+            self.expect(TokenType.LPAREN)
+            prompt = self.parse_expression() if not self.at(TokenType.RPAREN) else StringLiteral("")
+            self.expect(TokenType.RPAREN)
+            return InputStatement(prompt)
 
         # ── 括号表达式 ──
         if tok.type == TokenType.LPAREN:

@@ -16,8 +16,8 @@ def test_数值化():
 def test_文字化():
     assert run('令 X 为 基础库的文字化(42)。输出 X。') == ['42']
 
-def test_取模():
-    assert run('令 整数 X 为 基础库的取模(-5)。输出 X。') == ['5']
+def test_绝对值():
+    assert run('令 整数 X 为 基础库的绝对值(-5)。输出 X。') == ['5']
 
 def test_最大值():
     assert run('令 整数 X 为 基础库的最大值(3、5)。输出 X。') == ['5']
