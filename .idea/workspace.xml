@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="375af3ed-0ccb-4688-a09b-5db1c03f4de4" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qi/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/qi/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/文档/关于接口.md" beforeDir="false" afterPath="$PROJECT_DIR$/文档/关于接口.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/文档/关于教程.md" beforeDir="false" afterPath="$PROJECT_DIR$/文档/关于教程.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/文档/关于语法.md" beforeDir="false" afterPath="$PROJECT_DIR$/文档/关于语法.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/文档/常见问题.md" beforeDir="false" afterPath="$PROJECT_DIR$/文档/常见问题.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/文档/开发指南.md" beforeDir="false" afterPath="$PROJECT_DIR$/文档/开发指南.md" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "spiriwind-ek"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/spiriwind-ek/qi-lang.git",
+    "accountId": "855abd63-d3ef-4881-a89e-d0dacaf08941"
+  }
+}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3Ig4Bj98KqpIRUqul586HYfCler" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "master",
+    "ignore.virus.scanning.warn.message": "true",
+    "nodejs_package_manager_path": "npm"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-821f704e66d9-5bd6d13a2a75-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-262.9437.214" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="375af3ed-0ccb-4688-a09b-5db1c03f4de4" name="更改" comment="" />
+      <created>1788172744210</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1788172744210</updated>
+      <workItem from="1788172745375" duration="1411000" />
+      <workItem from="1788607137631" duration="2177000" />
+      <workItem from="1789003638540" duration="483000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

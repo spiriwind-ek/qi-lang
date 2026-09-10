@@ -19,19 +19,19 @@ python 化奇.py your_code.qi
 ## Syntax Examples
 
 ```
-令 整数 X 为 10。令 文本 名字 为 "奇语言"。
-输出 X 加 5。                  15
+令整数X为10。令文本名字为"奇语言"。
+输出X加5。                  15
 
-若 X 大于 0 则：输出 "正"。否则：输出 "负"。  Condition
-当 X 小于 3 时：设 X 为 X 加 1；输出 X。     Loop
+若X大于0则：输出"正"。否则：输出"负"。  Condition
+当X小于3时：设X为X加1；输出X。     Loop
 
-令 整数 求和 为（整数 甲、整数 乙）：返回 甲 加 乙。Function
-令 整数列 列表 为 [1、2、3]。                    List
-令 结构 学生 含：文本 姓名、整数 年龄。           Struct
-设 小明的年龄 为 19。                             Member access
-令 Y 为 若 X 大于 0 则 "正" 否则 "负"。           Ternary
+令整数求和为（整数甲、整数乙）：返回甲加乙。Function
+令整数列列表为[1、2、3]。                    List
+令结构学生含：文本姓名、整数年龄。           Struct
+设小明的年龄为19。                             Member access
+令Y为若X大于0则"正"否则"负"。           Ternary
 
-输出 文本库的长度("hello")。                      Standard library
+输出文本库的长度("hello")。                      Standard library
 ```
 
 ## Core Features
@@ -39,15 +39,15 @@ python 化奇.py your_code.qi
 | Feature | Description |
 |---------|-------------|
 | Context Keywords | Keywords can be used as variable names (`长度`, `文本库` no longer conflict) |
-| Static Types | `令 整数 X 为 10` |
+| Static Types | `令整数X为10` |
 | Chinese Operators | `加`, `减`, `乘`, `除`, `且`, `或`, `抑或` |
 | Block Structure | `：` starts, `。` ends, `；` chains multiple statements |
 | Bytecode VM | Stack-based virtual machine (enabled by default in interactive shell) |
 | Standard Library | Basic, Text, List, File modules |
-| Structs | `令 结构 学生 含：文本 姓名、整数 年龄` |
-| Lists | `令 整数列 X 为 [1、2、3]` (1-based indexing) |
+| Structs | `令结构学生含：文本姓名、整数年龄` |
+| Lists | `令整数列X为[1、2、3]` (1-based indexing) |
 | Functions | Recursive support, functions as values |
-| Ternary Expressions | `若 条件 则 A 否则 B` |
+| Ternary Expressions | `若条件则A否则B` |
 | File Extensions | `.q奇` (source), `.qi奇头` (headers) |
 
 ## Standard Library
